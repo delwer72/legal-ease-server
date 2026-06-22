@@ -90,6 +90,21 @@ app.get("/api/lawyers/all", verifyJWT, verifyAdmin, async (req, res) => {
   res.json(lawyers);
 });
 
+// ════════════════════════════════════════════════════════════
+    // USERS ROUTES
+    // ════════════════════════════════════════════════════════════
+
+    // Save or update user on login/register
+    app.post("/api/users", async (req, res) => {
+      const { name, email, image, role } = req.body;
+      const existing = await usersCollection.findOne({ email });
+      if (existing) {
+        return res.json({ message: "User already exists", user: existing });
+      }
+      const newUser = { name, email, image: image || "", role: role || "user", createdAt: new Date() };
+      const result = await usersCollection.insertOne(newUser);
+      res.json({ insertedId: result.insertedId, user: newUser });
+    });
 
 
 
