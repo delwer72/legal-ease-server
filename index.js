@@ -141,6 +141,12 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
       res.json(result);
     });
 
+    // ── Admin: Delete user ──
+    app.delete("/api/users/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await usersCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+      res.json(result);
+    });
+
 
 
     // Get latest 6 lawyers for home page
