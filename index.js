@@ -148,6 +148,37 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
     });
 
 
+    // ════════════════════════════════════════════════════════════
+    // LAWYERS ROUTES
+    // ════════════════════════════════════════════════════════════
+
+    // Get all published lawyers (public) with search, filter, sort, pagination
+    app.get("/api/lawyers", async (req, res) => {
+      const { search, specialization, minFee, maxFee, availability, sort, page = 1, limit = 9 } = req.query;
+      const query = { published: true };
+
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { specialization: { $regex: search, $options: "i" } },
+        ];
+      }
+      if (specialization) query.specialization = { $regex: specialization, $options: "i" };
+      if (availability) query.status = availability;
+      if (minFee || maxFee) {
+        query.fee = {};
+        if (minFee) query.fee.$gte = Number(minFee);
+        if (maxFee) query.fee.$lte = Number(maxFee);
+      }
+
+      const sortOption = sort === "fee_asc" ? { fee: 1 } : sort === "fee_desc" ? { fee: -1 } : { createdAt: -1 };
+      const skip = (Number(page) - 1) * Number(limit);
+      const total = await lawyersCollection.countDocuments(query);
+      const lawyers = await lawyersCollection.find(query).sort(sortOption).skip(skip).limit(Number(limit)).toArray();
+      res.json({ lawyers, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
+    });
+
+
 
     // Get latest 6 lawyers for home page
     app.get("/api/lawyers/featured", async (req, res) => {
