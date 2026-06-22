@@ -84,7 +84,12 @@ async function run() {
       res.json({ token });
     });
 
-    
+     // Admin: get ALL lawyers (published + unpublished)
+app.get("/api/lawyers/all", verifyJWT, verifyAdmin, async (req, res) => {
+  const lawyers = await lawyersCollection.find().sort({ createdAt: -1 }).toArray();
+  res.json(lawyers);
+});
+
 
 
 
