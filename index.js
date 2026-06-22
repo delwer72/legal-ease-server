@@ -201,6 +201,26 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
     });
 
 
+    / Lawyer creates their profile
+    app.post("/api/lawyers", verifyJWT, async (req, res) => {
+      const { name, bio, specialization, fee, image } = req.body;
+      const existing = await lawyersCollection.findOne({ lawyerEmail: req.user.email });
+      if (existing) return res.status(400).json({ message: "Profile already exists" });
+      const newLawyer = {
+        lawyerEmail: req.user.email,
+        name, bio, specialization,
+        fee: Number(fee),
+        image,
+        status: "Available",
+        published: false,
+        totalHires: 0,
+        createdAt: new Date(),
+      };
+      const result = await lawyersCollection.insertOne(newLawyer);
+      res.json(result);
+    });
+
+
 
      
    
