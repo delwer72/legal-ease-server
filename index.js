@@ -125,6 +125,23 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
 });
 
 
+// ── Admin: Get all users ──
+    app.get("/api/users", verifyJWT, verifyAdmin, async (req, res) => {
+      const users = await usersCollection.find().toArray();
+      res.json(users);
+    });
+
+    // ── Admin: Change user role ──
+    app.patch("/api/users/:id/role", verifyJWT, verifyAdmin, async (req, res) => {
+      const { role } = req.body;
+      const result = await usersCollection.updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { role } }
+      );
+      res.json(result);
+    });
+
+
 
     // Get latest 6 lawyers for home page
     app.get("/api/lawyers/featured", async (req, res) => {
