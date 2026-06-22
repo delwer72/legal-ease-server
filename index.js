@@ -245,7 +245,21 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
   res.json(result);
 });
 
+// Get lawyer's own profile
+    app.get("/api/lawyers/my-profile/me", verifyJWT, async (req, res) => {
+      const lawyer = await lawyersCollection.findOne({ lawyerEmail: req.user.email });
+      res.json(lawyer);
+    });
 
+    // Lawyer publish/unpublish their profile
+    app.patch("/api/lawyers/my-profile/publish", verifyJWT, async (req, res) => {
+      const { published } = req.body;
+      const result = await lawyersCollection.updateOne(
+        { lawyerEmail: req.user.email },
+        { $set: { published } }
+      );
+      res.json(result);
+    });
 
      
    
