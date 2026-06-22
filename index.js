@@ -380,8 +380,71 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
       res.json(result);
     });
 
-  
-   
+
+    // Admin: get all transactions
+    app.get("/api/payments", verifyJWT, verifyAdmin, async (req, res) => {
+      const payments = await paymentsCollection.find().sort({ date: -1 }).toArray();
+      res.json(payments);
+    });
+
+    // ════════════════════════════════════════════════════════════
+    // COMMENTS ROUTES
+    // ════════════════════════════════════════════════════════════
+
+    // Get comments for a lawyer
+    app.get("/api/comments/:lawyerId", async (req, res) => {
+      const comments = await commentsCollection.find({ lawyerId: req.params.lawyerId }).sort({ createdAt: -1 }).toArray();
+      res.json(comments);
+    });
+
+    // Post a comment (only if hired)
+    app.post("/api/comments", verifyJWT, async (req, res) => {
+      const { lawyerId, comment } = req.body;
+      const hiring = await hiringCollection.findOne({
+        userEmail: req.user.email,
+        lawyerId,
+        status: "accepted",
+      });
+      if (!hiring) return res.status(403).json({ message: "You must hire this lawyer first" });
+
+      const user = await usersCollection.findOne({ email: req.user.email });
+      const newComment = {
+        lawyerId,
+        userEmail: req.user.email,
+        userName: user?.name || "Anonymous",
+        userImage: user?.image || "",
+        comment,
+        createdAt: new Date(),
+      };
+      const result = await commentsCollection.insertOne(newComment);
+      res.json(result);
+    });
+
+    // User: get their own comments
+    app.get("/api/comments/user/my", verifyJWT, async (req, res) => {
+      const comments = await commentsCollection.find({ userEmail: req.user.email }).sort({ createdAt: -1 }).toArray();
+      res.json(comments);
+    });
+
+    // User: edit comment
+    app.patch("/api/comments/:id", verifyJWT, async (req, res) => {
+      const { comment } = req.body;
+      const result = await commentsCollection.updateOne(
+        { _id: new ObjectId(req.params.id), userEmail: req.user.email },
+        { $set: { comment } }
+      );
+      res.json(result);
+    });
+
+    // User: delete comment
+    app.delete("/api/comments/:id", verifyJWT, async (req, res) => {
+      const result = await commentsCollection.deleteOne({
+        _id: new ObjectId(req.params.id),
+        userEmail: req.user.email,
+      });
+      res.json(result);
+    });
+
 
     // ════════════════════════════════════════════════════════════
     // ADMIN ANALYTICS
