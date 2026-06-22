@@ -187,6 +187,21 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
     });
 
 
+    // Get top 3 most hired lawyers
+    app.get("/api/lawyers/top", async (req, res) => {
+      const lawyers = await lawyersCollection.find({ published: true }).sort({ totalHires: -1 }).limit(3).toArray();
+      res.json(lawyers);
+    });
+
+    // Get single lawyer by ID (public)
+    app.get("/api/lawyers/:id", async (req, res) => {
+      const lawyer = await lawyersCollection.findOne({ _id: new ObjectId(req.params.id) });
+      if (!lawyer) return res.status(404).json({ message: "Lawyer not found" });
+      res.json(lawyer);
+    });
+
+
+
      
    
 
