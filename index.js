@@ -6,6 +6,12 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
+const jwt = require("jsonwebtoken");
+const stripe = require("stripe");
+dotenv.config();
+console.log("Stripe key prefix:", process.env.STRIPE_SECRET_KEY?.slice(0, 12));
+
+
 const app = express();
 
 app.use(cors({
@@ -90,53 +96,8 @@ async function run() {
       res.json(requests);
     });
 
-    
-
-    
-    // ════════════════════════════════════════════════════════════
-    // PAYMENT ROUTES (Stripe)
-    // ════════════════════════════════════════════════════════════
-
-    // Create payment intent
-    app.post("/api/payments/create-intent", verifyJWT, async (req, res) => {
-      const { hiringId } = req.body;
-      const hiring = await hiringCollection.findOne({ _id: new ObjectId(hiringId) });
-      if (!hiring) return res.status(404).json({ message: "Hiring not found" });
-      if (hiring.paid) return res.status(400).json({ message: "Already paid" });
-
-      const paymentIntent = await stripeInstance.paymentIntents.create({
-        amount: hiring.fee * 100,
-        currency: "usd",
-        metadata: { hiringId: hiringId.toString(), userEmail: req.user.email },
-      });
-      res.json({ clientSecret: paymentIntent.client_secret });
-    });
-
-    // Save payment after success
-    app.post("/api/payments/confirm", verifyJWT, async (req, res) => {
-      const { hiringId, transactionId, amount, lawyerEmail } = req.body;
-      const payment = {
-        transactionId,
-        userEmail: req.user.email,
-        lawyerEmail,
-        amount: Number(amount),
-        hiringId,
-        date: new Date(),
-      };
-      const result = await paymentsCollection.insertOne(payment);
-      await hiringCollection.updateOne(
-        { _id: new ObjectId(hiringId) },
-        { $set: { paid: true, transactionId } }
-      );
-      res.json(result);
-    });
-
-    // Admin: get all transactions
-    app.get("/api/payments", verifyJWT, verifyAdmin, async (req, res) => {
-      const payments = await paymentsCollection.find().sort({ date: -1 }).toArray();
-      res.json(payments);
-    });
-    
+  
+   
 
     // ════════════════════════════════════════════════════════════
     // ADMIN ANALYTICS
