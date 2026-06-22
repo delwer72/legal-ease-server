@@ -106,6 +106,24 @@ app.get("/api/lawyers/all", verifyJWT, verifyAdmin, async (req, res) => {
       res.json({ insertedId: result.insertedId, user: newUser });
     });
 
+    / Get current user info
+    app.get("/api/users/me", verifyJWT, async (req, res) => {
+      const user = await usersCollection.findOne({ email: req.user.email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+      res.json(user);
+    });
+
+    // Update profile (name + image)
+    // এই route টা update করো:
+app.patch("/api/users/me", verifyJWT, async (req, res) => {
+  const { name, image, phone, address, city, country, bio } = req.body;
+  const result = await usersCollection.updateOne(
+    { email: req.user.email },
+    { $set: { name, image, phone, address, city, country, bio } }
+  );
+  res.json(result);
+});
+
 
 
     // Get latest 6 lawyers for home page
@@ -114,6 +132,8 @@ app.get("/api/lawyers/all", verifyJWT, verifyAdmin, async (req, res) => {
       res.json(lawyers);
     });
 
+
+     
    
 
     
