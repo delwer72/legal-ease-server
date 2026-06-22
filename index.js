@@ -201,7 +201,7 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
     });
 
 
-    / Lawyer creates their profile
+    // Lawyer creates their profile
     app.post("/api/lawyers", verifyJWT, async (req, res) => {
       const { name, bio, specialization, fee, image } = req.body;
       const existing = await lawyersCollection.findOne({ lawyerEmail: req.user.email });
@@ -219,6 +219,31 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
       const result = await lawyersCollection.insertOne(newLawyer);
       res.json(result);
     });
+
+
+    // Lawyer updates their profile
+    app.patch("/api/lawyers/my-profile", verifyJWT, async (req, res) => {
+  const {
+    name, bio, specialization, fee, image,
+    phone, city, country, experience, education,
+    languages, availability, linkedin, twitter,
+    consultationTime, achievements,
+  } = req.body;
+
+  const result = await lawyersCollection.updateOne(
+    { lawyerEmail: req.user.email },
+    {
+      $set: {
+        name, bio, specialization, fee: Number(fee), image,
+        phone, city, country, experience, education,
+        languages, availability, linkedin, twitter,
+        consultationTime, achievements,
+        status: availability || "Available",
+      },
+    }
+  );
+  res.json(result);
+});
 
 
 
