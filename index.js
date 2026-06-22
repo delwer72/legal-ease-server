@@ -276,16 +276,7 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
       res.json(result);
     });
 
-     
-   
-
     
-    
-
-   
-
-    
-
     
     // User sends hiring request
     app.post("/api/hiring", verifyJWT, async (req, res) => {
@@ -321,6 +312,34 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
     app.get("/api/hiring/lawyer", verifyJWT, async (req, res) => {
       const requests = await hiringCollection.find({ lawyerEmail: req.user.email }).sort({ requestDate: -1 }).toArray();
       res.json(requests);
+    });
+
+
+    // Lawyer: accept or reject hiring request
+    app.patch("/api/hiring/:id/status", verifyJWT, async (req, res) => {
+      const { status } = req.body; // "accepted" or "rejected"
+      const result = await hiringCollection.updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { status } }
+      );
+      if (status === "accepted") {
+        const hiring = await hiringCollection.findOne({ _id: new ObjectId(req.params.id) });
+        await lawyersCollection.updateOne(
+          { _id: new ObjectId(hiring.lawyerId) },
+          { $inc: { totalHires: 1 } }
+        );
+      }
+      res.json(result);
+    });
+
+    // Check if user has hired a lawyer (for comment permission)
+    app.get("/api/hiring/check/:lawyerId", verifyJWT, async (req, res) => {
+      const hiring = await hiringCollection.findOne({
+        userEmail: req.user.email,
+        lawyerId: req.params.lawyerId,
+        status: "accepted",
+      });
+      res.json({ hasHired: !!hiring });
     });
 
   
