@@ -261,6 +261,21 @@ app.patch("/api/users/me", verifyJWT, async (req, res) => {
       res.json(result);
     });
 
+    // ── Admin: publish/unpublish/delete any lawyer ──
+    app.patch("/api/lawyers/:id/publish", verifyJWT, verifyAdmin, async (req, res) => {
+      const { published } = req.body;
+      const result = await lawyersCollection.updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { published } }
+      );
+      res.json(result);
+    });
+
+    app.delete("/api/lawyers/:id", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await lawyersCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+      res.json(result);
+    });
+
      
    
 
