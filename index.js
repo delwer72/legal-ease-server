@@ -59,6 +59,20 @@ async function run() {
     const paymentsCollection = db.collection("payments");
     const commentsCollection = db.collection("comments");
 
+    // ─── Role Middleware ──────────────────────────────────────
+    const verifyAdmin = async (req, res, next) => {
+      const user = await usersCollection.findOne({ email: req.user.email });
+      if (user?.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+      next();
+    };
+
+    const verifyLawyer = async (req, res, next) => {
+      const user = await usersCollection.findOne({ email: req.user.email });
+      if (user?.role !== "lawyer") return res.status(403).json({ message: "Forbidden" });
+      next();
+    };
+
+
 
     // Get latest 6 lawyers for home page
     app.get("/api/lawyers/featured", async (req, res) => {
